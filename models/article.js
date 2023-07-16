@@ -1,12 +1,20 @@
 const mongoose = require('mongoose');
-
 const articleSchema = new mongoose.Schema({
   _id: {
     type: mongoose.Schema.Types.ObjectId,
     auto: true
   },
   title: {
-    type: String,
+    type: [{
+      langCode: {
+        type: String,
+        required: true
+      },
+      text: {
+        type: String,
+        required: true
+      }
+    }],
     required: true
   },
   // author: {
@@ -14,7 +22,16 @@ const articleSchema = new mongoose.Schema({
   //   required: true
   // },
   content: {
-    type: String,
+    type: [{
+      langCode: {
+        type: String,
+        required: true
+      },
+      text: {
+        type: String,
+        required: true
+      }
+    }],
     required: true
   },
   createdAt: {

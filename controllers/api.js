@@ -11,12 +11,35 @@ exports.postArticle = async (req, res, next) => {
     error.statusCode = 422;
     throw error;
   }
+
   try {
-    const {title, content} = req.body;
-     // Create a new article instance
+    const { titleEN, contentEN, titleAR, contentAR } = req.body;
+
+    const titleTranslations = [
+      {
+        langCode: "ar",
+        text: titleAR,
+      },
+      {
+        langCode: "en",
+        text: titleEN,
+      },
+    ];
+    const contentTranslations = [
+      {
+        langCode: "ar",
+        text: contentAR,
+      },
+      {
+        langCode: "en",
+        text: contentEN,
+      },
+    ];
+
+    // Create a new article instance with multilingual fields
     const article = new Article({
-      title,
-      content,
+      title: titleTranslations,
+      content: contentTranslations,
     });
 
     // Save the article to the database
@@ -24,7 +47,7 @@ exports.postArticle = async (req, res, next) => {
 
     res.status(201).json({
       article: savedArticle,
-      messege: "Article created successfully",
+      message: "Article created successfully",
     });
   } catch (err) {
     if (!err.statusCode) {
@@ -36,11 +59,16 @@ exports.postArticle = async (req, res, next) => {
 
 exports.getArticles = async (req, res, next) => {
   try {
-    const articles = await Article.find();
-
+    const { skip, limit, langCode } = req.params;
+    const articles = await Article.find()
+      .skip(skip ?? 0)
+      .limit(limit ?? 2)
+      .exec();
+    const totalCount = await Article.countDocuments();
     res.status(200).json({
       articles,
-      message: 'Articles retrieved successfully',
+      totalCount,
+      message: "Articles retrieved successfully",
     });
   } catch (err) {
     if (!err.statusCode) {
@@ -56,14 +84,14 @@ exports.getArticle = async (req, res, next) => {
     const article = await Article.findById(articleId);
 
     if (!article) {
-      const error = new Error('Article not found');
+      const error = new Error("Article not found");
       error.statusCode = 404;
       throw error;
     }
 
     res.status(200).json({
       article,
-      message: 'Article retrieved successfully',
+      message: "Article retrieved successfully",
     });
   } catch (err) {
     if (!err.statusCode) {
