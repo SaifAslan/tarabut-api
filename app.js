@@ -1,14 +1,30 @@
 const express = require("express");
-const bodyParser = require("body-parser");
 require("dotenv").config();
 // const authentication = require("./routes/authentication");
 const api = require("./routes/api");
 
 const { default: mongoose } = require("mongoose");
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+
 
 const app = express();
 
 app.use(express.json());
+
+
+// const upload = multer({
+//   storage: multerS3({
+//     s3: s3,
+//     bucket: 'tarabut-files',
+//     acl: 'public-read',
+//     key: function (request, file, cb) {
+//       console.log(file);
+//       cb(null, file.originalname);
+//     }
+//   })
+// }).array('upload', 1);
+
+
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -19,6 +35,7 @@ app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   next();
 });
+
 
 // app.use("/authentication", authentication);
 app.use("/api", api);

@@ -2,9 +2,19 @@ const express = require("express");
 
 const { body, param } = require("express-validator");
 
-const { postArticle, getArticle, getArticles } = require("../controllers/api");
+const {
+  postArticle,
+  getArticle,
+  getArticles,
+  uploaImage,
+} = require("../controllers/api");
+const multer = require("multer");
 
 const router = express.Router();
+
+const storage = multer.memoryStorage();
+
+const upload = multer({ storage });
 
 router.post(
   "/articles",
@@ -26,5 +36,7 @@ router.get(
 
 // GET /articles/:id
 router.get("/articles/:id", getArticle);
+
+router.post("/upload", upload.single("image"), uploaImage);
 
 module.exports = router;

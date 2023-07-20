@@ -1,6 +1,20 @@
 const { validationResult } = require("express-validator");
 
 const Article = require("../models/article");
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const Image = require("../models/image");
+const { v4: uuidv4 } = require("uuid");
+
+const s3Client = new S3Client({
+  endpoint: "https://ams3.digitaloceanspaces.com", // Find your endpoint in the control panel, under Settings. Prepend "https://".
+  region: "us-east-1", // Must be "us-east-1" when creating new Spaces. Otherwise, use the region in your endpoint (e.g. nyc3).
+  forcePathStyle: false, // Configures to use subdomain/virtual calling format.
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
 
 // POST /articles
 exports.postArticle = async (req, res, next) => {
@@ -100,3 +114,39 @@ exports.getArticle = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.uploaImage = async (req, res) => {
+  console.log(req.body.title);
+  try {
+    // Retrieve the uploaded image file
+    const file = req.file;
+
+    // Generate a unique filename
+    const filename = `${uuidv4()}-${file.originalname}`;
+
+    // Create the parameters for S3 upload
+    const uploadParams = {
+      Bucket: "tarabut-files",
+      Key: filename,
+      Body: file.buffer,
+      ACL: "public-read", // Optional: Specify ACL for the uploaded file
+    };
+
+    // Upload the file to DigitalOcean Spaces using AWS SDK v3
+    const uploadCommand = new PutObjectCommand(uploadParams);
+    await s3Client.send(uploadCommand);
+
+    // Save image metadata to MongoDB
+    const imageUrl = `${process.env.DO_ORIGIN_ENDPOINT}/${filename}`;
+    const image = new Image({
+      filename: file.originalname,
+      url: imageUrl,
+    });
+    await image.save();
+
+    res.status(201).json({ message: "Image uploaded successfully." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error uploading image." });
+  }
+}
