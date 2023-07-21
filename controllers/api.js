@@ -15,19 +15,45 @@ const s3Client = new S3Client({
   },
 });
 
-
 // POST /articles
 exports.postArticle = async (req, res, next) => {
-  const errors = validationResult(req).errors;
-  if (errors.length > 0) {
-    console.log(errors);
-    const error = new Error("Validation failed, entered data is incorrect");
-    error.statusCode = 422;
-    throw error;
-  }
+  // const errors = validationResult(req).errors;
+  // if (errors.length > 0) {
+  //   console.log(errors);
+  //   const error = new Error("Validation failed, entered data is incorrect");
+  //   error.statusCode = 422;
+  //   throw error;
+  // }
 
   try {
-    const { titleEN, contentEN, titleAR, contentAR } = req.body;
+   // Retrieve the uploaded image file
+   const file = req.file;
+
+   // Generate a unique filename
+   const filename = `${uuidv4()}-${file.originalname}`;
+
+   // Create the parameters for S3 upload
+   const uploadParams = {
+     Bucket: "tarabut-files",
+     Key: filename,
+     Body: file.buffer,
+     ACL: "public-read", // Optional: Specify ACL for the uploaded file
+   };
+
+   // Upload the file to DigitalOcean Spaces using AWS SDK v3
+   const uploadCommand = new PutObjectCommand(uploadParams);
+   await s3Client.send(uploadCommand);
+
+   // Save image metadata to MongoDB
+   const imageUrl = `${process.env.DO_ORIGIN_ENDPOINT}/${filename}`;
+   const image = new Image({
+     filename: file.originalname,
+     url: imageUrl,
+   });
+   await image.save();
+   console.log('image uploaded');
+   
+   const { titleEN, contentEN, titleAR, contentAR } = req.body;
 
     const titleTranslations = [
       {
@@ -115,9 +141,7 @@ exports.getArticle = async (req, res, next) => {
   }
 };
 
-exports.uploaImage = async (req, res) => {
-  console.log(req.body.title);
-  try {
+const uploaImage = async (req, res, next) => {
     // Retrieve the uploaded image file
     const file = req.file;
 
@@ -143,10 +167,5 @@ exports.uploaImage = async (req, res) => {
       url: imageUrl,
     });
     await image.save();
-
-    res.status(201).json({ message: "Image uploaded successfully." });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error uploading image." });
-  }
-}
+    console.log('image uploaded');
+};

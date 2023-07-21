@@ -18,12 +18,7 @@ const upload = multer({ storage });
 
 router.post(
   "/articles",
-  [
-    body("titleEN").notEmpty().withMessage("Title is required 'EN'"),
-    body("contentEN").notEmpty().withMessage("Content is required 'EN'"),
-    body("titleAR").notEmpty().withMessage("Title is required 'AR'"),
-    body("contentAR").notEmpty().withMessage("Content is required 'AR'"),
-  ],
+  upload.single("image"),
   postArticle
 );
 
@@ -37,6 +32,6 @@ router.get(
 // GET /articles/:id
 router.get("/articles/:id", getArticle);
 
-router.post("/upload", upload.single("image"), uploaImage);
+// router.post("/upload", upload.single("image"), uploaImage);
 
 module.exports = router;
